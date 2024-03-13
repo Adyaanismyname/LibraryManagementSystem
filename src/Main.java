@@ -8,62 +8,9 @@ import java.sql.SQLException;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
+
 public class Main {
 
-    public static class Book {
-        int book_id;
-        static int no_of_books = 0;
-        String title;
-        String author;
-        String genre;
-        boolean  isAvailable;
-
-
-        public Book(int book_id ,String title , String author , String genre , boolean isAvailable) {
-            this.book_id = book_id;
-            this.title = title;
-            this.author = author;
-            this.genre = genre;
-            this.isAvailable = isAvailable;
-
-
-            no_of_books++;
-
-
-
-        }
-
-
-
-    }
-    public static class User {
-
-        int user_id;
-        public static int no_of_users = 0;
-
-        String name;
-        String contact_info;
-        int borrowed_book; // stores book_id
-
-
-        public User(int user_id , String name , String contact_info , int borrowed_book) {
-            this.user_id = user_id;
-            this.name = name;
-            this.contact_info = contact_info;
-            this.borrowed_book = borrowed_book;
-
-            no_of_users++;
-
-
-        }
-
-        String getName() {
-            return this.name;
-        }
-        String get_contact() {
-            return this.contact_info;
-        }
-    }
 
     public static class Library {
         ArrayList<Book> books = new ArrayList<>();
@@ -202,8 +149,8 @@ public class Main {
                     if(b.isAvailable) {
                         for(User u : users) { // if book exists find if user exists
                             if(u.user_id == user_id) {
-                                if(u.borrowed_book == 0) {
-                                    System.out.println(u.name + "Has already borrowed a book");
+                                if(u.borrowed_book != 0) {
+                                    System.out.println(u.name + " Has already borrowed a book");
                                     return;
                                 }
                                 u.borrowed_book = b.book_id; // update book and user data
