@@ -77,7 +77,7 @@ public class Main {
                     Boolean availability_status = resultSet.getBoolean("availability_status");
 
                     Book book = new Book(book_Id , title , author , genre , availability_status);
-
+                    System.out.println(availability_status);
                     books.add(book);
 
                 }
@@ -144,65 +144,59 @@ public class Main {
 
         }
         // function to borrow books
-        void check_out_books(int user_id , int book_id) throws SQLException {
-            for(Book b : books) { // check if book is available/exists
-                if(b.book_id == book_id) {
-                    if(b.isAvailable) {
-                        for(User u : users) { // if book exists find if user exists
-                            if(u.user_id == user_id) {
-                                if(u.borrowed_book != 0) {
-                                    System.out.println(u.name + " Has already borrowed a book");
+        void check_out_books(int user_id, int book_id) throws SQLException {
+            for (Book b : books) {
+                if (b.book_id == book_id) {
+                    if (b.isAvailable) {
+                        for (User u : users) {
+                            if (u.user_id == user_id) {
+                                if (u.borrowed_book != 0) {
+                                    System.out.println(u.name + " has already borrowed a book");
                                     return;
                                 }
-                                u.borrowed_book = b.book_id; // update book and user data
-                                b.isAvailable = false;
-                                // updating databases
-                                String query = "UPDATE User SET borrowed_book = ? WHERE user_id = ?;";
-                                try (PreparedStatement preparedStatement = this.connection.prepareStatement(query)) {
+                                // Prepare and execute batch updates
+                                String userUpdateQuery = "UPDATE User SET borrowed_book = ? WHERE user_id = ?";
+                                String bookUpdateQuery = "UPDATE Book SET availability_status = false WHERE book_id = ?";
+                                try (PreparedStatement preparedStatement = connection.prepareStatement(userUpdateQuery);
+                                     PreparedStatement preparedStatement2 = connection.prepareStatement(bookUpdateQuery)) {
                                     preparedStatement.setInt(1, book_id);
                                     preparedStatement.setInt(2, user_id);
                                     preparedStatement.addBatch();
 
-                                    query = "UPDATE Book SET availability_status = false WHERE book_id = ?;";
-                                    preparedStatement.setInt(1, book_id);
-                                    preparedStatement.addBatch();
+                                    preparedStatement2.setInt(1, book_id);
+                                    preparedStatement2.addBatch();
 
-                                    int[] affected_rows = preparedStatement.executeBatch();
+                                    int[] affectedRows1 = preparedStatement.executeBatch();
+                                    int[] affectedRows2 = preparedStatement2.executeBatch();
 
-                                    if (affected_rows[0] > 0 && affected_rows[1] > 0) {
+                                    // Check if both updates were successful
+                                    if (affectedRows1[0] > 0 && affectedRows2[0] > 0) {
                                         System.out.println(b.title + " borrowed successfully by " + u.name);
+                                        u.borrowed_book = b.book_id; // Update user data
+                                        b.isAvailable = false; // Update book data
                                         return;
                                     } else {
                                         System.out.println("Failed to borrow");
+                                        return;
                                     }
                                 }
                             }
-                            else {
-                                System.out.println("No User with this user_id");
-                                return;
-                            }
                         }
                     }
-                    else {
-                        System.out.println("Book not available");
-                    }
                 }
-                else {
-                    System.out.println("No book with this book_id");
-                    return;
-                }
-
             }
-
+            System.out.println("Invalid ID inputted");
         }
+
         // function to return books
         void return_books(int user_Id, int book_id) throws SQLException {
             for (User u : users) {
                 if (u.user_id == user_Id) {
-                    u.borrowed_book = 0; // since id starts from 1
+
                     for (Book b : books) {
                         if (b.book_id == book_id) {
-                            b.isAvailable = true;
+                            System.out.println("book found " + b.title + "    " + b.isAvailable);
+
                             // updating database
                             String query = "UPDATE User SET borrowed_book = 0 WHERE user_id = ?;";
                             try (PreparedStatement preparedStatement = this.connection.prepareStatement(query)) {
@@ -217,25 +211,22 @@ public class Main {
 
                                 if (affected_rows[0] > 0 && affected_rows[1] > 0) {
                                     System.out.println(b.title + " returned successfully by " + u.name);
+                                    u.borrowed_book = 0; // since id starts from 1
+                                    b.isAvailable = true;
                                     return;
                                 } else {
                                     System.out.println("Failed to return");
+                                    return;
                                 }
                             }
                         }
-                        else {
-                            System.out.println("No book with this book_id");
-                            return;
-                        }
+
                     }
 
                 }
-                else {
-                    System.out.println("No User with this user_id");
-                    return;
 
-                }
             }
+            System.out.println("Invalid ID inputted");
         }
         // function to search book by author
         Book search_book_author(String author) {
