@@ -1,3 +1,4 @@
+// User.java
 public class User {
 
     int user_id;
